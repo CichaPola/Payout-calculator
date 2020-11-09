@@ -1,5 +1,7 @@
 # logistyka
 
+Logistyka to projekt zrealizowany dla pracowników pewnej firmy do wyliczania wynagrodzenia brutto dla kierowców. Projekt został wykonany z myślą jedynie o urządzeniach desktopowych. 
+
 ## Project setup
 ```
 npm install
