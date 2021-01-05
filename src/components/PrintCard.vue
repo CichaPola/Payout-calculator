@@ -3,7 +3,7 @@
         <table>
             <tr>
                 <td id="tab1Col1">
-                    <p id="companyName">FirmaX sp. z o.o. {{month}} {{data.year}}</p>
+                    <p id="companyName">FirmaX sp. z o.o. {{data.month}} {{data.year}}</p>
                     <p id="statisticalNum">Numer statystyczny: {{data.statisticalNum}}</p>
                     <p>Kurs euro: {{data.exchangeRate}}</p>
                 </td>
@@ -120,7 +120,7 @@ export default {
     },
     async created(){
         await this.getData();
-        window.print() 
+        window.print(); 
         this.$router.replace({ name: "form" }); 
     },
     methods: {
@@ -132,50 +132,6 @@ export default {
         delegationType() {
             return this.data.delegationType.toLowerCase()
         },
-        month() {
-            let month= ""
-            switch(this.data.month) {
-                case 1 :
-                    month="Styczeń";
-                    break;
-                case 2:
-                    month="Luty";
-                    break;
-                case 3:
-                    month="Marzec";
-                    break;
-                case 4:
-                    month="Kwiecień";
-                    break; 
-                case 5:
-                    month="Maj";
-                    break; 
-                case 6:
-                    month="Czerwiec";
-                    break; 
-                case 7:
-                    month="Lipiec";
-                    break; 
-                case 8:
-                    month="Sierpień";
-                    break; 
-                case 9:
-                    month="Wrzesień";
-                    break; 
-                case 10:
-                    month="Październik";
-                    break; 
-                case 11:
-                    month="Listopad";
-                    break; 
-                case 12:
-                    month="Grudzień";
-                    break; 
-                default:
-                    month="Styczeń";
-            }  
-            return month;                     
-        }
     }   
 }
 </script>

@@ -14,7 +14,15 @@
           <label :for="`month`">Miesiąc:</label>
         </b-col>
         <b-col sm="5">
-          <b-form-select :id="`month`" v-model="month" :options="options"></b-form-select>
+          <b-form-select :id="`month`" v-model="month" :options="monthOptions"></b-form-select>
+        </b-col>
+      </b-row>
+      <b-row class="my-1">
+        <b-col sm="3">
+          <label :for="`year`">Rok:</label>
+        </b-col>
+        <b-col sm="5">
+          <b-form-select :id="`year`" v-model="year" :options="yearOptions"></b-form-select>
         </b-col>
       </b-row>
       <b-row class="my-1">
@@ -215,20 +223,26 @@ export default {
     return {
       selected: [],
       selectMode: 'multi',
-      options: [
-          { value: '1', text: 'Styczeń' },
-          { value: '2', text: 'Luty' },
-          { value: '3', text: 'Marzec' },
-          { value: '4', text: 'Kwiecień' },
-          { value: '5', text: 'Maj'},
-          { value: '6', text: 'Czerwiec'},
-          { value: '7', text: 'Lipiec'},
-          { value: '8', text: 'Sierpień'},
-          { value: '9', text: 'Wrzesień'},
-          { value: '10', text: 'Październik'},
-          { value: '11', text: 'Listopad'},
-          { value: '12', text: 'Grudzień'},
-        ],
+      monthOptions: [
+        { value: 'Styczeń', text: 'Styczeń' },
+        { value: 'Luty', text: 'Luty' },
+        { value: 'Marzec', text: 'Marzec' },
+        { value: 'Kwiecień', text: 'Kwiecień' },
+        { value: 'Maj', text: 'Maj'},
+        { value: 'Czerwiec', text: 'Czerwiec'},
+        { value: 'Lipiec', text: 'Lipiec'},
+        { value: 'Sierpień', text: 'Sierpień'},
+        { value: 'Wrzesień', text: 'Wrzesień'},
+        { value: 'Październi', text: 'Październik'},
+        { value: 'Listopad', text: 'Listopad'},
+        { value: 'Grudzień', text: 'Grudzień'},
+      ],
+      month:"",
+      yearOptions: [
+        { value: "2020", text: "2020"},
+        { value: "2021", text: "2021"},
+      ],
+      year: "",
       text: "",
       days: null,
       name: "",
@@ -253,16 +267,10 @@ export default {
         { value: '0.44', text:'0,44'},
         { value: '0.45', text:'0,45'}
       ],
-      total1zl: null,
       exchangeRate: null,
       delegationType: "Krajowa",
-      total1euro: null,
       layover: null,
       hours: null,
-      total2euro: null,
-      total2zl: null,
-      total3euro: null,
-      total3zl: null,
       charge: {
         type: "decrease",
         amount: null,
@@ -292,13 +300,22 @@ export default {
       ],
     }
   },
+  created() {
+    if(this.month=="") {
+      this.month=this.currentMonth;
+    }
+    if(this.year=="") {
+      this.year=this.currentYear;
+    }
+  },
   computed: {
-    month() {
+    currentMonth() {
       let date = new Date();
       let month = date.getMonth();
-      return month;
+      const months= ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"];
+      return months[month];
     },
-    year(){
+    currentYear(){
       let date = new Date();
       let year = date.getFullYear();
       return year;
@@ -343,37 +360,80 @@ export default {
         }
       }
       return Arr;
-    }
-  },
-  methods: { 
-    onRowSelected(items) {
-      this.selected = items
     },
-    calculatetotal1zl(){
+    total1zl(){
+      let total1zl;
       if(this.kilometers !== null && this.rate !== null) {
-        this.total1zl= this.kilometers * this.rate;
-        this.total1zl= this.roundTo(this.total1zl, 2);
+        total1zl= this.kilometers * this.rate;
+        total1zl= this.roundTo(total1zl, 2);
       }
+      return total1zl;
     },
-    calculateTotal1euro() {
-      if(this.exchangeRate !== null && this.total1zl !== null) {
-        this.total1euro = this.total1zl / this.exchangeRate;
-        this.total1euro= this.roundTo(this.total1euro, 2);
+    total2zl() {
+      let total2zl;
+      if(this.exchangeRate && this.total2euro) {
+        total2zl= this.total2euro * this.exchangeRate;
+        total2zl= this.roundTo(total2zl, 2);
       }
+      return total2zl
     },
-    calculatetotal2euro(){
-      this.total2euro= (this.days * 50) + (this.layover * 25) + (this.hours * 2.08);
-      this.total2euro= this.roundTo(this.total2euro, 2);
-    },
-    calculateTotal2zl() {
-      if(this.exchangeRate !== null && this.total2euro !== null) {
-        this.total2zl= this.total2euro * this.exchangeRate;
-        this.total2zl= this.roundTo(this.total2zl, 2);
-      }
-    },
-    calculatetotal3euro(){
+    total3zl(){
       let increase=0;
       let decrease=0;
+      let total3zl;
+
+      for(let elem of this.chargeArray) {
+        if(elem.currency==="PLN"){
+          if(elem.type=="increase") {
+            increase+=parseInt(elem.amount);
+          }
+          else if (elem.type=="decrease") {
+            if(parseInt(elem.amount)<0){
+              elem.amount=parseInt(elem.amount) * (-1)
+            }
+            decrease+=parseInt(elem.amount);
+          }
+        }
+        else if( elem.currency==="EUR"){
+          if(elem.type=="increase") {
+            increase+=parseInt(elem.amount)*this.exchangeRate;
+          }
+          else if (elem.type=="decrease") {
+            if(parseInt(elem.amount)<0){
+              elem.amount=parseInt(elem.amount) * (-1)
+            }
+            decrease+=parseInt(elem.amount)*this.exchangeRate;
+          }
+        }
+      }
+      total3zl= (this.biggestTotalzl+increase-decrease);
+      total3zl= this.roundTo(total3zl, 2)
+      if(total3zl==0) {
+        total3zl="";
+      }
+      return total3zl;
+    },
+    total1euro() {
+      let total1euro;
+      if(this.exchangeRate && this.total1zl) {
+        total1euro = this.total1zl / this.exchangeRate;
+        total1euro= this.roundTo(total1euro, 2);
+      }
+      return total1euro;
+    },
+    total2euro(){
+      let total2euro;
+      total2euro= (this.days * 50) + (this.layover * 25) + (this.hours * 2.08);
+      total2euro= this.roundTo(total2euro, 2);
+      if(total2euro==0) {
+        total2euro="";
+      }
+      return total2euro;
+    },
+    total3euro(){
+      let increase=0;
+      let decrease=0;
+      let total3euro;
 
       for(let elem of this.chargeArray) {
         if(elem.currency==="PLN" && this.exchangeRate !== null){
@@ -400,46 +460,18 @@ export default {
         }
       }
       
-      this.total3euro= (this.biggestTotaleur+increase-decrease);
-      this.total3euro= this.roundTo(this.total3euro, 2);
+      total3euro= (this.biggestTotaleur+increase-decrease);
+      total3euro= this.roundTo(total3euro, 2);
 
-      if(this.total3euro==0) {
-        this.total3euro="";
+      if(total3euro==0) {
+        total3euro="";
       }
+      return total3euro;
     },
-    calculateTotal3zl(){
-      let increase=0;
-      let decrease=0;
-      
-      for(let elem of this.chargeArray) {
-        if(elem.currency==="PLN"){
-          if(elem.type=="increase") {
-            increase+=parseInt(elem.amount);
-          }
-          else if (elem.type=="decrease") {
-            if(parseInt(elem.amount)<0){
-              elem.amount=parseInt(elem.amount) * (-1)
-            }
-            decrease+=parseInt(elem.amount);
-          }
-        }
-        else if( elem.currency==="EUR"){
-          if(elem.type=="increase") {
-            increase+=parseInt(elem.amount)*this.exchangeRate;
-          }
-          else if (elem.type=="decrease") {
-            if(parseInt(elem.amount)<0){
-              elem.amount=parseInt(elem.amount) * (-1)
-            }
-            decrease+=parseInt(elem.amount)*this.exchangeRate;
-          }
-        }
-      }
-      this.total3zl= (this.biggestTotalzl+increase-decrease);
-      this.total3zl= this.roundTo(this.total3zl, 2)
-      if(this.total3zl==0) {
-        this.total3zl="";
-      }
+  },
+  methods: { 
+    onRowSelected(items) {
+      this.selected = items
     },
     roundTo(value, places) {
       let power = Math.pow(10, places);
@@ -524,56 +556,13 @@ export default {
       this.$store.dispatch('setDataToPrint', data);
     }
   },
-  watch: {
-    kilometers: function() {
-      this.calculatetotal1zl();
-    },
-    rate: function() {
-      this.calculatetotal1zl();
-    },
-    exchangeRate: function() {
-      this.calculateTotal1euro();
-      this.calculateTotal2zl();
-      this.calculatetotal3euro()
-      this.calculateTotal3zl()
-    },
-    total1zl: function() {
-      this.calculateTotal1euro();
-    },
-    days: function() {
-      this.calculatetotal2euro();
-    },
-    layover: function() {
-      this.calculatetotal2euro();
-    },
-    hours: function() {
-      this.calculatetotal2euro();
-    },
-    total2euro: function() {
-      this.calculateTotal2zl();
-      this.calculatetotal3euro()
-    },
-    total2zl: function () {
-      this.calculateTotal3zl()
-    },
-    chargeArrLen: function () {
-      this.calculateTotal3zl();
-      this.calculatetotal3euro()
-    },
-    biggestTotaleur: function () {
-      this.calculatetotal3euro()
-    },
-    biggestTotalzl: function () {
-      this.calculateTotal3zl();
-    },
-  }
 }
 </script>
 
 
 <style scoped>
 #mainContainer {
-  margin-top: 5%;
+  margin-top: 40px;
 }
 #leftContainer {
   margin-left: 7%;
